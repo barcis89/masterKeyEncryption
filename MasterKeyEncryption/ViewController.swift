@@ -151,14 +151,14 @@ class ViewController: UIViewController {
         //************************************************
         print("----Decryption of some example data----")
         
-        //6. Get data from store
+        //7. Get data from store
         let savedMessage = keychain.get("login")?.components(separatedBy: ":")
         let savedhmacSalt = (Data(base64Encoded: (savedMessage?[0])!)?.bytes)!
         let savedLoginIV = (Data(base64Encoded: (savedMessage?[1])!)?.bytes)!
         let savedEncryptedLogin = (Data(base64Encoded: (savedMessage?[2])!)?.bytes)!
         let savedHMAC = (Data(base64Encoded: (savedMessage?[3])!)?.bytes)!
         
-        //7. User inputs his passphrase and message is authenticated
+        //8. User inputs his passphrase and message is authenticated
         do {
             let hmacKey = try PKCS5.PBKDF2(password: password, salt: savedhmacSalt, iterations: 10_000, keyLength: 32, variant: .sha256).calculate()
             hmac = try HMAC(key: hmacKey, variant: .sha256).authenticate((headerMessage.data(using: .utf8)!.bytes))
@@ -169,7 +169,7 @@ class ViewController: UIViewController {
             print(error)
         }
         
-        //8. Decrypt data
+        //9. Decrypt data
         do {
             let aes = try AES(key: decryptedMasterKey, iv: savedLoginIV, blockMode: .CBC, padding: PKCS7())
             let decryptedLogin = try aes.decrypt(savedEncryptedLogin)
@@ -216,11 +216,11 @@ class ViewController: UIViewController {
             print(error)
         }
         
-        //5. New Salt
+        //4. New Salt
         let newSalt = Array<UInt8>(generateSalt(length: 16)!)
         print("New Salt: " + newSalt.toHexString())
         
-        //6. New derived Key
+        //5. New derived Key
         var newDerivedKey: Array<UInt8>!
         do {
             newDerivedKey = try PKCS5.PBKDF2(password: newPassword, salt: newSalt, iterations: 10_000, keyLength: 32, variant: .sha256).calculate()
@@ -229,10 +229,10 @@ class ViewController: UIViewController {
             print(error)
         }
         
-        //7. Generating new IV
+        //6. Generating new IV
         let newIV = AES.randomIV(AES.blockSize)
         
-        //8. Re-encrypting Master key
+        //7. Re-encrypting Master key
          do {
             let aes = try AES(key: newDerivedKey, iv: newIV, blockMode: .CBC, padding: PKCS7())
             let encryptedMasterKey = try aes.encrypt(decryptedMasterKey)
@@ -241,7 +241,7 @@ class ViewController: UIViewController {
             print(error)
         }
     
-        //10. Store new encrypted master key in keychain
+        //8. Store new encrypted master key in keychain
         let newEncryptedSaltIVMasterKey =
             newSalt.toBase64()! + ":" +
             newIV.toBase64()! + ":" +
@@ -249,7 +249,7 @@ class ViewController: UIViewController {
 
         keychain.set(newEncryptedSaltIVMasterKey, forKey: "masterKey")
         
-        //11. That's all we don't need to re-encrypt all previously encypted data
+        //9. That's all we don't need to re-encrypt all previously encypted data
         
     }
     
